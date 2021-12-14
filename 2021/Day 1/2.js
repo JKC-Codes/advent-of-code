@@ -4,9 +4,7 @@ function sweep(data) {
 	let answer = 0;
 
 	for(let i = 3, j = data.length; i < j; i++) {
-		const sharedValues = data[i - 2] + data[i - 1];
-
-		if(sharedValues + data[i - 3] < sharedValues + data[i]) {
+		if(data[i - 3] < data[i]) {
 			answer++;
 		}
 	}
