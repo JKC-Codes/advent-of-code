@@ -15,11 +15,14 @@ function score(data, size = 5) {
 		}
 	});
 
+	let lastBoard;
+	let lastDraw;
+
 	for(const draw of draws) {
-		for(const board of boards) {
+		boards.forEach((board, boardIndex) => {
 			const index = board.balls.indexOf(draw);
 
-			if(index === -1) { continue; }
+			if(index === -1) { return; }
 
 			const row = Math.floor(index / size);
 			const column = index % size;
@@ -29,13 +32,17 @@ function score(data, size = 5) {
 			board.balls[index] = null;
 
 			if(board.rows[row] === 0 || board.columns[column] === 0) {
-				return draw * board.balls.reduce((acc, cur) => acc + (cur !== null ? cur : 0));
+				lastBoard = board;
+				lastDraw = draw;
+				delete boards[boardIndex];
 			}
-		}
+		})
 	}
+
+	return lastDraw * lastBoard.balls.reduce((acc, cur) => acc + (cur !== null ? cur : 0));
 }
 
-console.assert(score(sample) === 4512);
+console.assert(score(sample) === 1924);
 
 const input = `17,25,31,22,79,72,58,47,62,50,30,91,11,63,66,83,33,75,44,18,56,81,32,46,93,13,41,65,14,95,19,38,8,35,52,7,12,70,84,23,4,42,90,60,6,40,97,16,27,86,5,48,54,64,29,67,26,89,99,53,34,0,57,3,92,37,59,9,21,78,51,80,73,82,76,28,88,96,45,69,98,1,2,71,68,49,36,15,55,39,87,77,74,94,61,85,10,43,20,24
 
