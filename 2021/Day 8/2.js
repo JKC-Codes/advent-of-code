@@ -1,23 +1,102 @@
 function countDigits(data) {
 	let total = 0;
 
-	for(segments of data) {
-		segments[1].forEach(segment => {
-			switch(segment.length) {
-				case 2:
-				case 3:
-				case 4:
-				case 7:
-					total++;
+	for(entry of data) {
+		const letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
+		const patterns = entry[0].map(signal => new Set(signal.split('')));
+		const patternsBySize = new Map();
+		const wireToSegment = new Map();
+
+		for(const pattern of patterns) {
+			if(patternsBySize.has(pattern.size)) {
+				patternsBySize.get(pattern.size).push(new Set(pattern));
 			}
-		})
+			else {
+				patternsBySize.set(pattern.size, [new Set(pattern)]);
+			}
+		}
+
+		for(const letter of letters) {
+			wireToSegment.set(letter, new Set(letters));
+		}
+
+		const missingWires = patternsBySize.get(6).reduce((acc, cur) => {
+			return acc.concat(letters.filter(letter => {
+				return !Array.from(cur).includes(letter);
+			}));
+		}, []);
+
+		narrow(['c', 'd', 'e'], missingWires);
+		narrow(['c', 'f'], Array.from([...patternsBySize.get(2)][0]));
+		narrow(['a', 'c', 'f'], Array.from([...patternsBySize.get(3)][0]));
+		narrow(['b', 'c', 'd', 'f'], Array.from([...patternsBySize.get(4)][0]));
+
+		const message = entry[1].reduce((acc, cur) => {
+			return acc + decode(cur);
+		}, '');
+
+		total += Number(message, 10);
+
+
+		function narrow(knownSegments, knownWires) {
+			for(const [wire, segments] of wireToSegment) {
+				if(knownWires.includes(wire)) {
+					segments.forEach(segment => {
+						if(!knownSegments.includes(segment)) {
+							segments.delete(segment);
+						}
+					})
+				}
+				else {
+					segments.forEach(segment => {
+						if(knownSegments.includes(segment)) {
+							segments.delete(segment);
+						}
+					})
+				}
+			}
+		}
+
+		function decode(pattern) {
+			switch(pattern.length) {
+				case 2: return 1;
+				case 3: return 7;
+				case 4: return 4;
+				case 7: return 8;
+			}
+
+			const patternToDigit = {
+				'abcefg': 0,
+				'acdeg': 2,
+				'acdfg': 3,
+				'abdfg': 5,
+				'abdefg': 6,
+				'abcdfg': 9,
+			}
+
+			const decodedPattern = pattern.split('').map(wire => {
+				return Array.from(wireToSegment.get(wire))[0];
+			}).sort().join('');
+
+			return patternToDigit[decodedPattern];
+		}
 	}
 
 	return total;
 }
 
 
-const sample = [
+const sample1 = [
+	[
+		['acedgfb', 'cdfbe', 'gcdfa', 'fbcad', 'dab', 'cefabd', 'cdfgeb', 'eafb', 'cagedb', 'ab'],
+		['cdfeb', 'fcadb', 'cdfeb', 'cdbaf']
+	],
+];
+const expectation1 = 5353;
+const test1 = countDigits(sample1);
+console.assert(test1 === expectation1, `\n\tExpected: ${expectation1}\n\tGot: ${test1}`);
+
+const sample2 = [
 	[
 		['be','cfbegad','cbdgef','fgaecd','cgeb','fdcge','agebfd','fecdb','fabcd','edb'],
 		['fdgacbe','cefdb','cefbgd','gcbe']
@@ -59,9 +138,9 @@ const sample = [
 		['fgae','cfgab','fg','bagce']
 	]
 ];
-const expectation = 26;
-const test = countDigits(sample);
-console.assert(test === expectation, `\n\tExpected: ${expectation}\n\tGot: ${test}`);
+const expectation2 = 61229;
+const test2 = countDigits(sample2);
+console.assert(test2 === expectation2, `\n\tExpected: ${expectation2}\n\tGot: ${test2}`);
 
 const input = `defabc gcb dbafcg gc gcbed fbecgd begfdac fcbde cfge debag | gfce fgce bdefgca aebgd
 eabdc egbda bagcef eg fdageb beg bcfdag egdf agbfd cbgdafe | fdbga bge ebg eg
