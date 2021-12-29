@@ -1,29 +1,51 @@
-function getRiskLevel(data) {
+function getBasins(data) {
 	const width = data[0].length;
 	const height = data.length;
-	const lowPoints = [];
+	const basinsCount ={};
+
+	let previousGroups = [];
+	let currentGroups = [];
+	let group = null;
 
 	for(let row = 0; row < height; row++) {
 		for(let column = 0; column < width; column++) {
-			if(data[row - 1] !== undefined && data[row - 1][column] <= data[row][column]) {
-				continue;
+			if(data[row][column] === 9) {
+				group = null;
 			}
-			else if(data[row][column + 1] !== undefined && data[row][column + 1] <= data[row][column]) {
-				continue;
+			else if(previousGroups[column] && group !== previousGroups[column]) {
+				if(group !== null) {
+					basinsCount[previousGroups[column]] = (basinsCount[previousGroups[column]] || 0) + (basinsCount[group] || 0);
+					delete basinsCount[group];
+
+					currentGroups = currentGroups.map(currentGroup => {
+						return group === currentGroup ? previousGroups[column] : currentGroup;
+					});
+				}
+
+				group = previousGroups[column];
 			}
-			else if(data[row + 1] !== undefined && data[row + 1][column] <= data[row][column]) {
-				continue;
+			else if(group === null) {
+				group = `${row}-${column}`;
 			}
-			else if(data[row][column - 1] !== undefined && data[row][column - 1] <= data[row][column]) {
-				continue;
-			}
-			else {
-				lowPoints.push(data[row][column] + 1);
+
+			currentGroups.push(group);
+		}
+
+		for(const group of currentGroups) {
+			if(group !== null) {
+				basinsCount[group] = 1 + (basinsCount[group] || 0);
 			}
 		}
-	}
 
-	return lowPoints.reduce((acc, cur) => acc + cur, 0);
+		previousGroups = currentGroups;
+		currentGroups = [];
+		group = null;
+	}
+console.log(basinsCount);
+	return Object.values(basinsCount)
+		.sort((a, b) => b - a)
+		.slice(0, 3)
+		.reduce((acc, cur) => acc * cur, 1);
 }
 
 
@@ -34,8 +56,8 @@ const sample = [
 	[8,7,6,7,8,9,6,7,8,9],
 	[9,8,9,9,9,6,5,6,7,8]
 ];
-const expectation = 15;
-const test = getRiskLevel(sample);
+const expectation = 1134;
+const test = getBasins(sample);
 console.assert(test === expectation, `\n\tExpected: ${expectation}\n\tGot: ${test}`);
 
 const input = `9234598321279999876543212397634598789843210123456789212999878987556456999878965432459101987654567899
@@ -140,4 +162,4 @@ const input = `92345983212799998765432123976345987898432101234567892129998789875
 7643456789345987898987689985434598764567899988798998798799999876349876546778998765434567899987201234`.split('\n')
 .map(heights => heights.split('').map(height => Number(height)));
 
-console.log(getRiskLevel(input));
+console.log(getBasins(input));
